@@ -1,0 +1,4 @@
+<resources>
+    <integer name="grid_columns">3</integer>
+    <integer name="initial_item_count">30</integer>
+</resources>
