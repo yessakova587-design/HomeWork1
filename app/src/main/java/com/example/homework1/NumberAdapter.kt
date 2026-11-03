@@ -9,20 +9,31 @@ import androidx.recyclerview.widget.RecyclerView
 class NumberAdapter(initialCount: Int) :
     RecyclerView.Adapter<NumberAdapter.NumberViewHolder>() {
 
-    // Список номеров элементов
     private val items = MutableList(initialCount) { it }
+    private val deletedItems = mutableListOf<Int>()
 
-    // Класс, который хранит ссылки на элементы интерфейса
+    // Номер следующего нового элемента
+    private var nextNumber = initialCount
+
+    // Восстановление состояния после поворота
+    constructor(
+        savedItems: ArrayList<Int>,
+        savedDeletedItems: ArrayList<Int>,
+        savedNextNumber: Int
+    ) : this(0) {
+        items.addAll(savedItems)
+        deletedItems.addAll(savedDeletedItems)
+        nextNumber = savedNextNumber
+    }
+
     class NumberViewHolder(itemView: View) :
         RecyclerView.ViewHolder(itemView) {
 
         val container: View = itemView
-
         val number: TextView =
             itemView.findViewById(R.id.itemNumber)
     }
 
-    // Создание нового квадратика
     override fun onCreateViewHolder(
         parent: ViewGroup,
         viewType: Int
@@ -34,17 +45,14 @@ class NumberAdapter(initialCount: Int) :
         return NumberViewHolder(view)
     }
 
-    // Заполнение квадратика номером и цветом
     override fun onBindViewHolder(
         holder: NumberViewHolder,
         position: Int
     ) {
-
         val number = items[position]
 
         holder.number.text = number.toString()
 
-        // Чётные числа красные, нечётные синие
         val color = if (number % 2 == 0) {
             R.color.red_item
         } else {
@@ -54,18 +62,42 @@ class NumberAdapter(initialCount: Int) :
         holder.container.setBackgroundResource(color)
     }
 
-    // Количество элементов списка
     override fun getItemCount(): Int {
         return items.size
     }
 
-    // Добавление нового элемента
+    // Удаление первого элемента
+    fun removeFirstItem() {
+        if (items.isEmpty()) return
+
+        val removedItem = items.removeAt(0)
+        deletedItems.add(removedItem)
+
+        notifyItemRemoved(0)
+        notifyItemRangeChanged(0, items.size)
+    }
+
+    // Добавление: сначала возвращаем удалённые,
+    // затем создаём новые элементы
     fun addItem() {
 
-        val newNumber = items.size
+        if (deletedItems.isNotEmpty()) {
 
-        items.add(newNumber)
+            val restoredItem = deletedItems.removeAt(0)
+            items.add(restoredItem)
+
+        } else {
+
+            items.add(nextNumber)
+            nextNumber++
+        }
 
         notifyItemInserted(items.lastIndex)
     }
+
+    fun getItems(): List<Int> = items.toList()
+
+    fun getDeletedItems(): List<Int> = deletedItems.toList()
+
+    fun getNextNumber(): Int = nextNumber
 }
